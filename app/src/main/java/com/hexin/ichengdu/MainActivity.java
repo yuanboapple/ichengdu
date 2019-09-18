@@ -6,6 +6,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
+import android.app.Activity;
+import android.app.ActivityManager;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
@@ -58,25 +61,15 @@ public class  MainActivity extends AppCompatActivity implements EasyPermissions.
         reloadBtn = findViewById(R.id.reloadBtn);
         dWebView = findViewById(R.id.h5WebView);
         dWebView.getSettings().setTextZoom(100);
+        dWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         dWebView.addJavascriptObject(new JsApi(), null);
+
         dWebView.loadUrl("https://xtintera.ichengdu.com/");
         WebSettings settings = dWebView.getSettings();
         int screenDensity = getResources().getDisplayMetrics().densityDpi;
         WebSettings.ZoomDensity zoomDensity = WebSettings.ZoomDensity.MEDIUM;
         //设置缓存模式
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
-//        switch (screenDensity) {
-//            case DisplayMetrics.DENSITY_LOW:
-//                zoomDensity = WebSettings.ZoomDensity.CLOSE;
-//                break;
-//            case DisplayMetrics.DENSITY_MEDIUM:
-//                zoomDensity = WebSettings.ZoomDensity.MEDIUM;
-//                break;
-//            case DisplayMetrics.DENSITY_HIGH:
-//                zoomDensity = WebSettings.ZoomDensity.FAR;
-//                break;
-//        }
-//        settings.setDefaultZoom(zoomDensity);
         errorView.setVisibility(View.GONE);
         DWebView.setWebContentsDebuggingEnabled(true);
 //        new LoginOut().UserLoginOut(this, new Handler(){
@@ -102,16 +95,12 @@ public class  MainActivity extends AppCompatActivity implements EasyPermissions.
             @Override
             public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse errorResponse) {
                 super.onReceivedHttpError(view, request, errorResponse);
-//                dWebView.setVisibility(View.GONE);
-//                errorView.setVisibility(View.VISIBLE);
-//                loadError = true;
                 System.out.println(request.getUrl());
                 System.out.println("********http error**********");
             }
 
             @Override
             public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
                 if(!loadError) {
                     errorView.setVisibility(View.GONE);
                     dWebView.setVisibility(View.VISIBLE);
@@ -122,6 +111,7 @@ public class  MainActivity extends AppCompatActivity implements EasyPermissions.
                         }
                     });
                 }
+                super.onPageFinished(view, url);
 
             }
 
@@ -234,7 +224,16 @@ public class  MainActivity extends AppCompatActivity implements EasyPermissions.
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
-                finish();
+
+                ActivityManager mActivityManager = (ActivityManager) MyApplication.getContext().getSystemService(Context.ACTIVITY_SERVICE);
+                List<ActivityManager.RunningAppProcessInfo> mList = mActivityManager.getRunningAppProcesses();
+                for (ActivityManager.RunningAppProcessInfo runningAppProcessInfo : mList) {
+                    if (runningAppProcessInfo.pid != android.os.Process.myPid()) {
+                        android.os.Process.killProcess(runningAppProcessInfo.pid);
+                    }
+                }
+                android.os.Process.killProcess(android.os.Process.myPid());
+//                finish();
             }
         });
         builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
